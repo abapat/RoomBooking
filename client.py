@@ -7,9 +7,10 @@ import sys, time
 from socket import *
 
 def printRules():
-    print "Rules: \nEnter in [Day] [time1] [time2] format, where [time2] is optional. Example: Tuesday 7:00-11:30 12:00-14:00 16:00-17:30"
-    print "You may enter a recurring rule using the format [Day1/Day2] [time], such as Monday/Thursday/Friday 5:00-6:00. A hyphen must be used to specify time range, with no spaces in between"
-    print "You may add multiple rules by using \';\' to separate arguments: [Day1] [time1];[Day2] [time2]. There must be a space between the day and time"
+        print "Rules: \nEnter in [Day] [time1] [time2] format, where [time2] is optional. Example: Tuesday 7:00-11:30 12:00-14:00 16:00-17:30"
+
+        print "You may enter a recurring rule using the format [Day1/Day2] [time], such as Monday/Thursday/Friday 5:00-6:00. A hyphen must be used to specify time range, with no spaces in between"
+        print "You may add multiple rules by using \';\' to separate arguments: [Day1] [time1];[Day2] [time2]. There must be a space between the day and time"
 
 #sends message and recieves response from server with address
 def send(clientSocket, data):

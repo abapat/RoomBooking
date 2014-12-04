@@ -27,7 +27,7 @@ class Day:
                 startInd = self.translate(i)
                 while (i < len(self.slots) and self.slots[i] == 0):
                     i = i + 1
-                endInd = self.translate(i) 
+                endInd = self.translate(i-1) 
                 str = str + " " + startInd + "-" + endInd
 
         return str
@@ -51,31 +51,31 @@ class Day:
         return str
 
     #tries to book certain timeslot for day, returns error if bad time
-    #param: str, ex) 4:30-7:00; op= book or free
+    #param: str, ex) 5:00-8:00; op= book or free
     #return: int errorcode, str message
-    def modifyTiming(self, str, op):
-        times = str.split("-")
+    def modifyTiming(self, string, op):
+        times = string.split("-")
         book = 1
-        if op == "free"
+        if op == "free":
             book = 0 #free
 
         if timeCheck(times[0]) == 1 or timeCheck(times[1]) == 1:
             errCode = 1
-            message = "Incorrect time format. Please enter a valid timeslot"
+            message = "Incorrect time format. Please enter a valid timeslot. Error occured at: " + string
             return errCode, message
 
-        startInd = getIndex(times[0])
-        endInd = getIndex(times[1])
+        startInd = self.getIndex(times[0])
+        endInd = self.getIndex(times[1]) - 1
 
         i = startInd
         while i < endInd:
             if self.slots[i] == book:
-                timeslot = translate(i)
+                timeslot = self.translate(i)
                 errCode = 1
                 message = "Timeslot already "
-                if book == 1
+                if book == 1:
                     message = message + "booked!"
-                else
+                else:
                     message = message + "freed!"
                 message = message + " Error occured at time " + timeslot
                 return errCode, message
@@ -88,7 +88,7 @@ class Day:
         return errCode, message
 
     #string time-> index; ex) 4:30 => 9
-    def getIndex(str):
+    def getIndex(self, str):
         parts = str.split(":")
         hour = int(parts[0])
         ind = hour * 2
@@ -99,15 +99,15 @@ class Day:
         return ind
 
     #index to string time
-    def translate(index):
+    def translate(self, index):
         ind = index / 2
-        str = str(ind) + ":"
+        string = str(ind) + ":"
         if ind % 2 != 0:
-            str = str + "30"
+            string = string + "30"
         else:
-            str = str + "00"
+            string = string + "00"
 
-        return str
+        return string
 
 
 class Schedule:
@@ -232,33 +232,37 @@ def login(name, users):
     return "1,User not found"
 
 def getUser(user, users):
+    
     for u in users:
-        if u.name.lower == user.lower
+        print "DEBUG: Checking: " + str(u.name.lower()) + " vs: " + user.lower()
+        if u.name.lower() == user.lower():
             return u
 
     return None
 
 def validDay(text):
     for i in daysWeek:
-        if text.lower == i.lower:
+        if text.lower() == i.lower():
             return 1
 
     return 0
 
 #checks for valid time: 1) valid hour 2)valid minute 3)valid format
-def timeCheck(str):
-    if ":" not in str:
+def timeCheck(string):
+    if ":" not in string:
         return 1
 
-    parts = str.split(":")
+    parts = string.split(":")
     if (len(parts[0]) > 2 or len(parts[1]) > 2):        
         return 1
     hours = int(parts[0])
     mins = int(parts[1])
 
     if hours < 0 or hours > 23:
+        print "DEBUG: hourcheck- returning 1 for hrs " + str(hours)
         return 1
-    if mins != 0 or mins != 30:
+    if mins != 0 and mins != 30:
+        print "DEBUG: mincheck- returning 1 for mins " + str(mins)
         return 1
 
     return 0
@@ -293,7 +297,7 @@ def display(str, users):
 def modify(string, users, op):
     parts = string.split("_")
     user = getUser(parts[0], users)
-    if user == None
+    if user == None:
         return "1,Invalid User"
     sched = user.schedule
     response = ""
@@ -301,6 +305,7 @@ def modify(string, users, op):
     while i <= 2:
         week = parts[i]
         if week == "":
+            i = i+1
             continue
         entries = []
         if ";" not in week:
@@ -332,9 +337,9 @@ def modify(string, users, op):
                 if flag == 1 and "-" in a:
                     times.append(a)
 
-            if len(days) == 0
+            if len(days) == 0:
                 return "1,Error while parsing days: could not find day to modify"
-            if len(times) == 0
+            if len(times) == 0:
                 return "1,Error while parsing times: could not find time to modify"
 
             if i == 1:
@@ -354,10 +359,10 @@ def modify(string, users, op):
 
 # users_timeframe_duration  ex) 'amit;rohan;alice_1&2_Tuesday/Thursday 13:00-16:30 19:00-21:00; Friday 1:00-4:00_1:30'
 #ex) 'amit;rohan;bob_2_all_30
-def query(string, users):
+#def query(string, users):
 
 
-def book(string, users):
+#def book(string, users):
 
 
 #**************************************************************************************
@@ -382,8 +387,9 @@ for line in f:
     person = User(name, email)
     users.append(person)
 
-#print "result: " + display("Amit;1&2;all", users)
-#exit()
+print "Result: " + modify("amit_Tuesday/thursday 05:00-8:00; Friday 12:00-14:30_", users, "book") + "\n"
+print "result: " + display("Amit;1&2;all", users)
+exit()
 while True:
 
     # Receive the client packet along with the address it is coming from
@@ -393,7 +399,7 @@ while True:
     #get data from client
     function = msg[0]
     arg = msg[1]
-
+    print "Recieved arg: " + arg + "\n"
     responseMsg = ""
 
     if function == "login":
