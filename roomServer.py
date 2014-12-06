@@ -16,10 +16,15 @@ class Day:
         self.day = dayofweek
         self.slots = [0 for i in range(48)] #list length 48
         
+    #def debug_printSlots():
+
+
     #prints available timeslots
     def printDay(self):
-        str = self.day + ":"
+        string = self.day + ":"
         i = 0
+        flag = 0
+        
         while i < len(self.slots):
             if self.slots[i] == 1:
                 i = i + 1
@@ -27,15 +32,51 @@ class Day:
                 startInd = self.translate(i)
                 while (i < len(self.slots) and self.slots[i] == 0):
                     i = i + 1
-                endInd = self.translate(i-1) 
-                str = str + " " + startInd + "-" + endInd
+                endInd = self.translate(i) 
+                string = string + " " + startInd + "-" + endInd
 
-        return str
+        return string
 
-    #compares 2 days and returns the times which both days are free
-    def compareDays(self):
-        str = self.day + ":"
-        i = 0
+    #returns when the day is free in certain time frame and duration
+    #params: array of timeslots (already checked for errors) ex) 7:00-9:30
+    #returns: array of valid times
+    def getAvailableTimes(self, timeslot, duration):
+        times = []
+        for time in timeslot:
+            parts = time.split("-")
+            startInd = self.getIndex(parts[0])
+            endInd = self.getIndex(parts[1])
+            dur = 0
+            i = startInd
+            while i < endInd:
+                if self.slots[i] == 0:
+                    #startInd = i
+                    dur = dur + 0.5
+                    i = i + 1
+    
+                elif dur >= duration and startInd != i: #found timeslot with correct duration
+                    nextSlot = self.translate(startInd) + "-" + self.translate(i)
+                    times.append(nextSlot)
+                    dur = 0
+                    i = i + 1
+                    startInd = i
+
+                else: #no match
+                    dur = 0
+                    i = i + 1
+                    startInd = i
+
+
+            if dur >= duration and startInd != i:
+                nextSlot = self.translate(startInd) + "-" + self.translate(i)
+                times.append(nextSlot)
+                
+        return times
+
+
+
+
+        '''
         while i < len(self.slots):
             if self.slots[i] == 0 and day.slots[i] == 0:
                 startInd = self.translate(i)
@@ -48,7 +89,7 @@ class Day:
             else:
                 i = i + 1
 
-        return str
+        return str '''
 
     #tries to book certain timeslot for day, returns error if bad time
     #param: str, ex) 5:00-8:00; op= book or free
@@ -68,7 +109,7 @@ class Day:
         endInd = self.getIndex(times[1]) - 1
 
         i = startInd
-        while i < endInd:
+        while i <= endInd:
             if self.slots[i] == book:
                 timeslot = self.translate(i)
                 errCode = 1
@@ -102,7 +143,7 @@ class Day:
     def translate(self, index):
         ind = index / 2
         string = str(ind) + ":"
-        if ind % 2 != 0:
+        if index % 2 != 0:
             string = string + "30"
         else:
             string = string + "00"
@@ -142,7 +183,7 @@ class Schedule:
             
             if string.lower() in arr: #it will be in week
                 ind = arr.index(string.lower())
-                output = output + week[ind].printDay() + "\n"
+                output = output + week[ind].printDay() + "\n" + str(week[ind].slots) + "\n"
             else:
                 output = output + "Invalid input: " + string + "\n"
 
@@ -163,6 +204,29 @@ class Schedule:
                     msg = msg + message + "\n"
 
         return 0,msg
+
+    #param: string week, array of days and array of timeslots to check for availability. all args have been checked for errors
+    def queryTimeslot(self, week, days, times,duration):
+        
+        res = ""
+        flag = 0
+        for d in days:
+            day = self.getDay(week, d)
+            t = day.getAvailableTimes(times,duration)
+            if len(t) != 0:
+                if flag == 0:
+                    res = res + d
+                    flag = 1
+                else:
+                    res = res + ";" + d
+
+                for validTime in t:
+                    res = res + " " + validTime
+
+        print "DEBUG: in queryTimeslot, returning=" + res + "\n"
+        return res
+        
+
 
 
     def getDay(self, week, day):
@@ -234,7 +298,7 @@ def login(name, users):
 def getUser(user, users):
     
     for u in users:
-        print "DEBUG: Checking: " + str(u.name.lower()) + " vs: " + user.lower()
+        #print "DEBUG: Checking: " + str(u.name.lower()) + " vs: " + user.lower()
         if u.name.lower() == user.lower():
             return u
 
@@ -258,11 +322,14 @@ def timeCheck(string):
     hours = int(parts[0])
     mins = int(parts[1])
 
-    if hours < 0 or hours > 23:
+    if hours < 0 or hours > 24:
         print "DEBUG: hourcheck- returning 1 for hrs " + str(hours)
         return 1
     if mins != 0 and mins != 30:
         print "DEBUG: mincheck- returning 1 for mins " + str(mins)
+        return 1
+    if hours == 24 and mins > 0:
+        print "DEBUG: invalid- 24:xx " + str(mins)
         return 1
 
     return 0
@@ -335,6 +402,9 @@ def modify(string, users, op):
                     flag = 1
 
                 if flag == 1 and "-" in a:
+                    t = a.split("-")
+                    if timeCheck(t[0]) == 1 or timeCheck(t[1]) == 1:
+                        return "1, invalid timeslot " + a
                     times.append(a)
 
             if len(days) == 0:
@@ -358,8 +428,123 @@ def modify(string, users, op):
 
 
 # users_timeframe_duration  ex) 'amit;rohan;alice_1&2_Tuesday/Thursday 13:00-16:30 19:00-21:00; Friday 1:00-4:00_1:30'
-#ex) 'amit;rohan;bob_2_all_30
-#def query(string, users):
+#compareDays(self, day1, timeslot, duration) returns array of times 
+def runQuery(string, users):
+    parts = string.split("_")
+
+    if ";" not in parts[0]:
+        return "1,You must book a meeting with more than 1 person!"
+
+    userArr = parts[0].split(";")
+    userObjs = []
+    for u in userArr:
+        if u == "":
+            continue
+        curr = getUser(u, users)
+        if curr == None:
+            return "1,Could not find user " + u
+        userObjs.append(curr)
+
+    week = []
+    
+    if parts[1] == "1":
+        week.append("week1")
+    elif parts[1] == "2":
+        week.append("week2")
+    else:
+        week.append("week1")
+        week.append("week2") 
+
+    slot = parts[2]
+    duration = float(parts[3])
+    
+    entries = []
+    results = []
+
+    for w in week:
+        if ";" not in slot:
+            entries.append(slot)
+        else:
+            entries = slot.split(";")
+
+        print "DEBUG: entering userObj loop, entries=" + str(entries) + "\n"
+
+        slot = ""
+        for usr in userObjs:
+            sched = usr.schedule
+            slot = "" #for each user, building different timeslot of availability ex) Tuesday/Thursday 13:00-16:30 19:00-21:00; Friday 1:00-4:00 
+            for e in entries:
+                if e == "":
+                    continue
+
+                args = e.split(" ")
+                flag = 0 #0- day not found. 1- day was found
+                days = []
+                times = []
+                for a in args:
+                    if a == "":
+                        continue
+
+                    if flag == 0 and "/" in a:
+                        for d in a.split("/"):
+                            if d != "" and validDay(d) == 0: #not valid day
+                                return "1,Please enter a valid day. Error occured at: " + d
+
+                        days = a.split("/")
+                        flag = 1
+
+                    elif flag == 0 and validDay(a) == 1:
+                        days.append(a)
+                        flag = 1
+
+                    if flag == 1 and "-" in a:
+                        times.append(a)
+
+                if len(days) == 0:
+                    return "1,Error while parsing days: could not find day to modify"
+                if len(times) == 0:
+                    return "1,Error while parsing times: could not find time to modify"
+
+                output = sched.queryTimeslot(w, days, times, duration)
+                if output == "":
+                    slot = ""
+                else:
+                    slot = slot + output + ";"
+
+            if slot == "":
+                return [1,"No available timeslot for " + str(duration) + " hours with specified users"]
+
+            entries = slot.split(";")
+
+        #should have updated slot availability time for week x
+        results.append((w + "_" + slot)) #may have ";" at end
+
+    return [0,results]
+
+
+def query(string, users):
+    res = runQuery(string, users)
+    errCode = int(res[0])
+    if errCode == 1:
+        return "1," + res[1]
+
+    results = res[1]
+    output = ""
+    for r in results:
+        if r == 0:
+            continue
+        parts = r.split("_")
+        output = output + "\t\t\t" + parts[0] + "\n" + "____________________________________________________________" + "\n"
+        days = parts[1].split(";")
+        for d in days:
+            if d == "":
+                continue
+            output = output + d + "\n"
+
+        output = output + "\n\n"
+
+    return "0," + output 
+
 
 
 #def book(string, users):
@@ -387,8 +572,12 @@ for line in f:
     person = User(name, email)
     users.append(person)
 
-print "Result: " + modify("amit_Tuesday/thursday 05:00-8:00; Friday 12:00-14:30_", users, "book") + "\n"
-print "result: " + display("Amit;1&2;all", users)
+print "Result: " + modify("amit_Tuesday/thursday 02:00-4:00; Friday 1:30-3:00_ Sunday 00:00-24:00; Saturday 1:00-4:30 6:00-13:30 15:00-20:00", users, "book") + "\n\n\n"
+print "Result: " + modify("alice_Tuesday/thursday 02:00-4:00 8:00-11:00; Friday 1:30-3:00_Saturday 1:00-4:30 6:00-13:30 15:00-20:00", users, "book") + "\n\n\n"
+print "Meeting Availability: \n" + query("amit;rohan;alice_1&2_Tuesday/thursday 02:00-4:00 8:00-12:30_1.5", users)
+#print "Result: " + modify("amit_Tuesday/thursday 02:00-3:00_", users, "free") + "\n"
+#print "result: " + display("Amit;1&2;all", users)
+#print "result: " + display("alice;1&2;all", users)
 exit()
 while True:
 

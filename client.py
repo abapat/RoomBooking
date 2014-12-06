@@ -59,9 +59,13 @@ def showAvailableSlots(clientSocket, user):
 
 
 #Modify current user's timeslot
-def modifyTimeslot(clientSocket, user):
+def modifyTimeslot(clientSocket, user, flag):
+    op = ""
     data = ""
-    op = raw_input("Would you like to:\n1)Enter availability\n2)Delete a timeslot\n")
+    if flag != 1:
+        op = raw_input("Would you like to:\n1)Enter availability\n2)Delete a timeslot\n")
+    else:
+        op = "1"
 
     if int(op) == 1:
         printRules()
@@ -90,6 +94,8 @@ def modifyTimeslot(clientSocket, user):
 
 #Queries for a timeslot to schedule meeting, books meeting for specified users, sends email
 def bookMeeting(clientSocket, user):
+    
+
     print "Querying Timeslots\n"
     return 0
  
@@ -121,6 +127,8 @@ if errCode == 1:
     clientSocket.close()
     exit()
 
+print "Hello, " + user +". Please enter your availability:\n"
+modifyTimeslot(clientSocket,user,1)
 
 quit = 0
 
@@ -130,7 +138,7 @@ while (quit == 0):
     if opt == '1':
         quit = showAvailableSlots(clientSocket, user)
     elif opt == '2':
-        quit = modifyTimeslot(clientSocket, user)
+        quit = modifyTimeslot(clientSocket, user, 0)
     elif opt == '3':
         quit = bookMeeting(clientSocket, user)
     elif opt == '4':
